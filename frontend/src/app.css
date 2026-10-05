@@ -13,7 +13,7 @@ body {
   background: radial-gradient(circle at 50% 20%, #fff8e8, var(--paper));
   color: var(--ink);
 }
-.login, .yard {
+.login {
   max-width: 920px;
   margin: 0 auto;
   padding: 32px 20px 60px;
@@ -60,4 +60,54 @@ button, input {
 .err { color: #b42318; }
 .hint { color: #6b5a48; font-size: 0.92em; }
 label { display: block; margin: 8px 0; }
-.topbar { display: flex; justify-content: space-between; align-items: baseline; }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.shell { max-width: 920px; margin: 0 auto; padding: 32px 20px 60px; }
+.sub { color: #6b5a48; }
+.nav { display: flex; gap: 8px; margin-top: 6px; }
+.navbtn {
+  background: #efe6d2;
+  border: 1px solid #d9c89c;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.navbtn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+.who { display: flex; align-items: center; gap: 10px; white-space: nowrap; color: #6b5a48; }
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.9em;
+  color: #fff;
+}
+.badge.pass { background: var(--done); }
+.badge.slip { background: #b4513a; }
+.badge.none { background: #9a8f7c; }
+.slip-line { margin: 6px 0; }
+.page { margin-top: 8px; }
+.filterbar { margin: 12px 0; }
+.filterbar select { padding: 6px 10px; }
+.slip-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e4d8bf;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.slip-table th, .slip-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #efe6d2;
+}
+.slip-table th { background: #f6eeda; font-weight: 600; }
+.slip-table tr.voided { color: #9a8f7c; text-decoration: line-through; }
+.voidbtn { background: #b4513a; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.slip-form {
+  margin-top: 20px;
+  background: #fff;
+  border: 1px solid #e4d8bf;
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.slip-form label { display: inline-flex; flex-direction: column; margin-right: 14px; }
+.slip-form input, .slip-form select { margin-top: 4px; }

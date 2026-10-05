@@ -1,6 +1,16 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -46,6 +56,10 @@ class Basin(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     filature: Mapped[Filature] = relationship(back_populates="basins")
     readings: Mapped[list["BathReading"]] = relationship(back_populates="basin")
+    slips: Mapped[list["CohesionSlip"]] = relationship(
+        back_populates="basin",
+        cascade="all, delete-orphan",
+    )
 
 
 class BathReading(Base):
@@ -57,3 +71,32 @@ class BathReading(Base):
     water_temp_c: Mapped[float] = mapped_column(Float)
     operator: Mapped[str] = mapped_column(String(64), default="")
     basin: Mapped[Basin] = relationship(back_populates="readings")
+
+
+class CohesionSlip(Base):
+    """抱合抽检条：同一盆按抽检时刻取最近一张未作废条作为浸茧→缫丝中的放行依据。"""
+
+    __tablename__ = "cohesion_slips"
+    __table_args__ = (
+        # 两名检验交叉给同一盆交抽检时刻相同的两张未作废条时，只许入库一张。
+        Index(
+            "uq_cohesion_basin_inspected_active",
+            "basin_id",
+            "inspected_at",
+            unique=True,
+            postgresql_where=text("voided_at IS NULL"),
+        ),
+    )
+
+    RESULT_PASS = "pass"
+    RESULT_SLIP = "slip"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    basin_id: Mapped[int] = mapped_column(ForeignKey("basins.id"))
+    inspected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    result: Mapped[str] = mapped_column(String(10))
+    inspector: Mapped[str] = mapped_column(String(64), default="")
+    voided_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+    basin: Mapped[Basin] = relationship(back_populates="slips")
