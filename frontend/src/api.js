@@ -1,4 +1,5 @@
 const TOKEN_KEY = "silkreel_token";
+const USER_KEY = "silkreel_user";
 
 export function token() {
   return localStorage.getItem(TOKEN_KEY) || "";
@@ -10,6 +11,22 @@ export function setToken(value) {
 
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+export function user() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY));
+  } catch {
+    return null;
+  }
+}
+
+export function setUser(value) {
+  localStorage.setItem(USER_KEY, JSON.stringify(value));
+}
+
+export function clearUser() {
+  localStorage.removeItem(USER_KEY);
 }
 
 export async function api(path, options = {}) {

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -46,6 +46,7 @@ class Basin(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     filature: Mapped[Filature] = relationship(back_populates="basins")
     readings: Mapped[list["BathReading"]] = relationship(back_populates="basin")
+    inspections: Mapped[list["CohesionInspection"]] = relationship(back_populates="basin")
 
 
 class BathReading(Base):
@@ -57,3 +58,31 @@ class BathReading(Base):
     water_temp_c: Mapped[float] = mapped_column(Float)
     operator: Mapped[str] = mapped_column(String(64), default="")
     basin: Mapped[Basin] = relationship(back_populates="readings")
+
+
+class CohesionInspection(Base):
+    """抱合抽检条：同一盆同一抽检时刻只许一张未作废条（部分唯一索引）。"""
+
+    __tablename__ = "cohesion_inspections"
+    __table_args__ = (
+        Index(
+            "uq_cohesion_open_slot",
+            "basin_id",
+            "inspected_at",
+            unique=True,
+            postgresql_where=text("voided_at IS NULL"),
+            sqlite_where=text("voided_at IS NULL"),
+        ),
+    )
+
+    CONCLUSION_PASS = "合格"
+    CONCLUSION_SLIP = "打滑"
+    CONCLUSIONS = (CONCLUSION_PASS, CONCLUSION_SLIP)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    basin_id: Mapped[int] = mapped_column(ForeignKey("basins.id"))
+    inspected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    conclusion: Mapped[str] = mapped_column(String(8))
+    inspector: Mapped[str] = mapped_column(String(64), default="")
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    basin: Mapped[Basin] = relationship(back_populates="inspections")

@@ -3,8 +3,32 @@ from datetime import timedelta
 from sqlalchemy import select
 
 from app.db import SessionLocal
-from app.models import Basin, BathReading, Filature, User, utcnow
+from app.models import Basin, BathReading, CohesionInspection, Filature, User, utcnow
 from app.security import hash_password
+
+
+async def _ensure_slip_seed(session) -> None:
+    """保证至少一张结论打滑的未作废抽检条挂在浸茧盆上(新库老库都幂等)。"""
+    has_any = (await session.execute(select(CohesionInspection.id))).first()
+    if has_any:
+        return
+    basin = (
+        await session.execute(
+            select(Basin)
+            .where(Basin.status == Basin.STATUS_SOAKING)
+            .order_by(Basin.ring_index)
+        )
+    ).scalars().first()
+    if basin is None:
+        return
+    session.add(
+        CohesionInspection(
+            basin_id=basin.id,
+            inspected_at=utcnow() - timedelta(hours=1),
+            conclusion=CohesionInspection.CONCLUSION_SLIP,
+            inspector="admin",
+        )
+    )
 
 
 async def seed_demo() -> None:
@@ -28,6 +52,7 @@ async def seed_demo() -> None:
 
         mill = (await session.execute(select(Filature))).scalars().first()
         if mill:
+            await _ensure_slip_seed(session)
             await session.commit()
             return
 
@@ -56,4 +81,5 @@ async def seed_demo() -> None:
                         taken_at=now - timedelta(hours=2),
                     )
                 )
+        await _ensure_slip_seed(session)
         await session.commit()
